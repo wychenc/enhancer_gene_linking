@@ -109,9 +109,9 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             rand_score_list_pearson.append(pearsonr(rna_vec, dna_vec))
             rand_score_list_spearman.append(spearmanr(rna_vec, dna_vec))
 
-    np.savetxt('output_path'+chr_name+'rna_dnase_pair_locations.txt', loc_list, fmt="%s")
-    np.savetxt('output_path'+chr_name+'pearson_corr.txt', score_list_pearson, fmt="%s")
-    np.savetxt('output_path'+chr_name+'spearman_corr.txt', score_list_spearman, fmt="%s")
+    np.savetxt(output_path+chr_name+'rna_dnase_pair_locations.txt', loc_list, fmt="%s")
+    np.savetxt(output_path+chr_name+'pearson_corr.txt', score_list_pearson, fmt="%s")
+    np.savetxt(output_path+chr_name+'spearman_corr.txt', score_list_spearman, fmt="%s")
 
     if visualize:
         val_pearson = [i[0] for i in score_list_pearson]
@@ -152,7 +152,7 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
         plt.title('frequencies of correlation values: real against null')
         plt.xlabel('correlation values')
         plt.ylabel('frequency')
-        plt.show()
+        plt.savefig(output_path+'frequencies_of_correlation_values.png')
 
         # plot frequencies of absolute pearson correlation values
         freq_pearson = []
@@ -193,7 +193,7 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
         plt.title('frequencies of absolute correlation values: real against null')
         plt.xlabel('correlation values')
         plt.ylabel('frequency')
-        plt.show()
+        plt.savefig(output_path+'frequencies_of_absolute_correlation_values.png')
 
         # plot area under frequency curve
         freq_pearson = []
@@ -235,10 +235,10 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
         plt.plot(x,y3,'k',label='spearman real')
         plt.plot(x,y4,'--k',label='spearman null')
         plt.legend(loc='upper right')
-        plt.title('area under frequency curve of pearson correlation values: real against null')
-        plt.xlabel('pearson corr values')
+        plt.title('area under frequency curve of correlation values: real against null')
+        plt.xlabel('correlation values')
         plt.ylabel('area under frequency curve')
-        plt.show()
+        plt.savefig(output_path+'area_under_frequency_curve_of_correlation_values.png')
 
 def main():
     import argparse
