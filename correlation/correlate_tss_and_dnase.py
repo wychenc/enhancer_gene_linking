@@ -54,14 +54,13 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             dna_d_new[(dna_row_label[r], dna_col_label[c])] = dna_mat[r,c]
 
     # identifies dnase peaks <1MB of each tss
-    #'''
+
     a = pybedtools.example_bedtool(rna_row_labels)
     b = pybedtools.example_bedtool(dnase_row_labels)
     dnase_within_1MB_of_rna_tss = a.window(b, w=1000000)
     np.savetxt(output_path+'dnase_within_1MB_of_rna_tss.bed',dnase_within_1MB_of_rna_tss, fmt="%s")
-    #'''
+
     loc_d = {} # dictionary where key is rna loc and value is list of dnase locs < 1 MB
-    #with open('/srv/scratch/wychen66/get_correlation/bed_overlap/dnase_within_1MB_of_rna_tss.bed','r') as f4:
     with open(output_path+'dnase_within_1MB_of_rna_tss.bed','r') as f4: 
         for l4 in f4:
             items = l4.strip().split('\t')
