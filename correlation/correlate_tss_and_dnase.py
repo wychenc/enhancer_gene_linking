@@ -109,9 +109,9 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             rand_score_list_pearson.append(pearsonr(rna_vec, dna_vec))
             rand_score_list_spearman.append(spearmanr(rna_vec, dna_vec))
 
-    np.savetxt(output_path+chr_name+'rna_dnase_pair_locations.txt', loc_list, fmt="%s")
-    np.savetxt(output_path+chr_name+'pearson_corr.txt', score_list_pearson, fmt="%s")
-    np.savetxt(output_path+chr_name+'spearman_corr.txt', score_list_spearman, fmt="%s")
+    np.savetxt(output_path+chr_name+'_rna_dnase_pair_locations.txt', loc_list, fmt="%s")
+    np.savetxt(output_path+chr_name+'_pearson_correlation.txt', score_list_pearson, fmt="%s")
+    np.savetxt(output_path+chr_name+'_spearman_correlation.txt', score_list_spearman, fmt="%s")
 
     if visualize:
         val_pearson = [i[0] for i in score_list_pearson]
