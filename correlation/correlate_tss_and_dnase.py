@@ -103,10 +103,10 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             target = 1
             #target = [57,67,92,98,108,137]  # example points
             if counter == target:
-                x_rna = rna_vec
-                y_dna = dna_vec
-                x_loc = rna_loc
-                y_loc = dna_loc
+                global x_rna = rna_vec
+                global y_dna = dna_vec
+                global x_loc = rna_loc
+                global y_loc = dna_loc
 
             if np.std(rna_vec)==0 or np.std(dna_vec)==0: # to avoid nan's            
                 continue
