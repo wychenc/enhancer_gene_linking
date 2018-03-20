@@ -80,7 +80,6 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
     else:
         loc_d_sub = {k:v for (k,v) in loc_d.items() if str(chr_name) in k}  
 
-    counter = 0
     for rna_loc in loc_d_sub: # for each rna loc 
         dna_loc_list = loc_d_sub[rna_loc] # get list of dna loc <1MB 
         rna_ct_all_samples = [] # list of rna counts across 122 samples for 1 specific rna loc
@@ -98,19 +97,6 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
 
             rna_vec = np.asarray(rna_ct_all_samples).astype(np.float)
             dna_vec = np.asarray(dna_ct_all_samples).astype(np.float)
-
-            counter += 1
-            target = 1
-            #target = [57,67,92,98,108,137]  # example points
-            if counter == target:
-                global x_rna 
-                x_rna = rna_vec
-                global y_dna 
-                y_dna = dna_vec
-                global x_loc 
-                x_loc = rna_loc
-                global y_loc 
-                y_loc = dna_loc
 
             if np.std(rna_vec)==0 or np.std(dna_vec)==0: # to avoid nan's            
                 continue
@@ -163,7 +149,7 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
         plt.plot(x,y3,'k',label='spearman real')
         plt.plot(x,y4,'--k',label='spearman null')
         plt.legend(loc='upper right')
-        plt.title('frequencies of pearson & spearman correlation values: real against null')
+        plt.title('frequencies of correlation values: real against null')
         plt.xlabel('correlation values')
         plt.ylabel('frequency')
         plt.show()
@@ -171,16 +157,23 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
         # plot frequencies of absolute pearson correlation values
         freq_pearson = []
         freq_rand_pearson = []
+        freq_spearman = []
+        freq_rand_spearman = []
+        
         tick_marks = np.linspace(-1, 1, 101)
 
         val_pearson_abs = [abs(number) for number in val_pearson]
         val_rand_pearson_abs = [abs(number) for number in val_rand_pearson]
+        val_spearman_abs = [abs(number) for number in val_spearman]
+        val_rand_spearman_abs = [abs(number) for number in val_rand_spearman]
 
         left_tick = -1
         right_tick = -0.98
         for frame in np.arange(100):
             freq_pearson.append(sum(((i > left_tick) & (i < right_tick))for i in val_pearson_abs))
             freq_rand_pearson.append(sum(((i > left_tick) & (i < right_tick))for i in val_rand_pearson_abs))
+            freq_spearman.append(sum(((i > left_tick) & (i < right_tick))for i in val_spearman_abs))
+            freq_rand_spearman.append(sum(((i > left_tick) & (i < right_tick))for i in val_rand_spearman_abs))
 
             left_tick += 0.02
             right_tick += 0.02
@@ -188,13 +181,17 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
         x = tick_marks[0:100]
         y1 = freq_pearson
         y2 = freq_rand_pearson
+        y3 = freq_spearman
+        y4 = freq_rand_spearman
 
         plt.figure(figsize=(10, 10))
         plt.plot(x,y1,'b',label='pearson real')
         plt.plot(x,y2,'--b',label='pearson null')
+        plt.plot(x,y3,'k',label='spearman real')
+        plt.plot(x,y4,'--k',label='spearman null')
         plt.legend(loc='upper right')
-        plt.title('frequencies of absolute pearson correlation values: real against null')
-        plt.xlabel('pearson corr values')
+        plt.title('frequencies of absolute correlation values: real against null')
+        plt.xlabel('correlation values')
         plt.ylabel('frequency')
         plt.show()
 
@@ -203,8 +200,13 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
         freq_rand_pearson = []
         auc_pearson = []
         auc_rand_pearson = []
+        
+        freq_spearman = []
+        freq_rand_spearman = []
+        auc_spearman = []
+        auc_rand_spearman = []
+        
         tick_marks = np.linspace(-1, 1, 101)
-
         left_tick = -1
         right_tick = -0.98
         for frame in np.arange(100):
@@ -212,32 +214,32 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             auc_pearson.append(trapz(freq_pearson, dx=0.01))
             freq_rand_pearson.append(sum(((i > left_tick) & (i < right_tick))for i in val_rand_pearson))
             auc_rand_pearson.append(trapz(freq_rand_pearson, dx=0.01))
-
+            
+            freq_spearman.append(sum(((i > left_tick) & (i < right_tick))for i in val_spearman))
+            auc_spearman.append(trapz(freq_spearman, dx=0.01))
+            freq_rand_spearman.append(sum(((i > left_tick) & (i < right_tick))for i in val_rand_spearman))
+            auc_rand_spearman.append(trapz(freq_rand_spearman, dx=0.01))
+            
             left_tick += 0.02
             right_tick += 0.02
 
         x = tick_marks[0:100]
         y1 = auc_pearson
         y2 = auc_rand_pearson
+        y3 = auc_spearman
+        y4 = auc_rand_spearman
 
         plt.figure(figsize=(10, 10))
         plt.plot(x,y1,'b',label='pearson real')
         plt.plot(x,y2,'--b',label='pearson shuffled')
+        plt.plot(x,y3,'k',label='spearman real')
+        plt.plot(x,y4,'--k',label='spearman null')
         plt.legend(loc='upper right')
         plt.title('area under frequency curve of pearson correlation values: real against null')
         plt.xlabel('pearson corr values')
         plt.ylabel('area under frequency curve')
         plt.show()
 
-        # plot pearson correlation of 1 rna-dnase pair across cell samples
-        plt.figure(figsize=(10,10))
-        plt.scatter(x_rna,y_dna)
-        for i, txt in enumerate(rna_col_label):
-            plt.annotate(txt, (x[i],y[i]))
-        plt.title('plot pearson correlation across cell samples of 1 tss-dnase pair at tss_loc:', rna_loc, ' and dnase_loc:', dna_loc)
-        plt.show()
-
-        
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='computes pearson and spearman correlations of rna and dnase peaks across different cell samples')
