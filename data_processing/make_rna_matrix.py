@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[28]:
+# In[12]:
 
 # uses gencode.v19.annotation.gtf 
 def make_rna_matrix(output_path):
@@ -32,7 +32,7 @@ def make_rna_matrix(output_path):
                     if "count" in l2:
                         continue
                     link = l2.split('\t')
-                    gene_id = link[0] # did not take transcript_id
+                    gene_id = link[0] 
                     expected_count = link[4] 
                     gene_id_set.add(gene_id)
                     d[(gene_id, biosample_matched_dnase)] = expected_count
@@ -74,7 +74,7 @@ def make_rna_matrix(output_path):
 
                 orig_d[ids] = orig_loc
                 gtf_d[ids] = locs
-    
+
     # load list of rna loc
     rna_tss_loc = []
     rna_set = set()
@@ -86,7 +86,7 @@ def make_rna_matrix(output_path):
                 if val == items:
                     rna_tss_loc.append(gtf_d.get(key))
     np.savetxt(output_path+'rna_counts_gene-by-cellline_unsorted_row_labels_tss.txt', rna_tss_loc, fmt="%s")
-    
+
     # these lists are for labeling pca plots
     color_list = []
     tissue_list = []
@@ -119,7 +119,7 @@ def make_rna_matrix(output_path):
     np.savetxt(output_path+'rna_counts_gene-by-cellline_sorted_column_label.txt', biosample_matched_dnase_list,fmt="%s",delimiter='\t')
     '''
     # below prepares for pca analysis
-    sorted_rna_matrix = rna_matrix
+    sorted_rna_matrix = rna_matrix.astype(np.float)
     rna_transpose = np.transpose(sorted_rna_matrix)
 
     # normalize over sequencing depth
@@ -179,7 +179,7 @@ def make_rna_matrix(output_path):
 
     plt.figure(figsize=(10, 10))
     plt.plot(x,y,'k',linewidth=0.1)
-    plt.title('frequency plot of each column of rna_matrix taking on various values across 123 samples')
+    plt.title('frequency plot of each column of rna_matrix taking on various values across cell samples')
     plt.xlabel('count values in rna_matrix')
     plt.ylabel('frequency of count value')
     plt.savefig(output_path+'frequency_plot_of_rna_matrix_values.png')
