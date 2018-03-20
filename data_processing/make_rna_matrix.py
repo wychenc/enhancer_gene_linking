@@ -164,10 +164,10 @@ def make_rna_matrix(output_path):
     plt.show()
     '''
     # make frequency plot of each column of dnase_matrix taking on various values
-    freq_matrix = np.zeros([123,100])
+    freq_matrix = np.zeros([122,100])
     tick_marks = np.linspace(-1, 22889435, 101)
 
-    for sample in np.arange(123):
+    for sample in np.arange(122):
         left_tick = 0
         right_tick = 1
         for frame in np.arange(100):
