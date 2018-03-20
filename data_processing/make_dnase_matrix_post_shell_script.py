@@ -3,21 +3,21 @@
 
 # In[2]:
 
-def make_dnase_matrix_post_shell_script(output_path)
+def make_dnase_matrix_post_shell_script(input_path, output_path)
     import numpy as np
     from sklearn.decomposition import PCA
     from matplotlib import pyplot as plt
 
-    dnase_matrix = np.loadtxt(output_path+'final_dnase_matrix.txt',dtype=float)
+    dnase_matrix = np.loadtxt(input_path+'final_dnase_matrix.txt',dtype=float)
     dnase_transpose = np.transpose(dnase_matrix)
-    
+
     dnase_bios_labels=[]
-    with open(output_path+'bios_eid_for_final_dnase_matrix.txt','r') as f1: 
+    with open(input_path+'folder_name.txt','r') as f1: 
         for l1 in f1:
             items = l1.strip().split('\t')
             dnase_bios_labels.append(items[0])
     f1.close()
-    np.savetxt(output_path+'bios_column_label_for_final_dnase_matrix.txt', dnase_bios_labels, fmt="%s")    
+    np.savetxt(output_path+'final_dnase_matrix_column_labels.txt', dnase_bios_labels, fmt="%s")    
 
     # pca analysis, normalized over sequencing depth
     col_sum = np.sum(dnase_transpose,axis=1)
@@ -31,7 +31,7 @@ def make_dnase_matrix_post_shell_script(output_path)
 
     # make vector of labels
     pca_labels =[]
-    with open(output_path+'pca_labels.txt','r') as f1: 
+    with open(input_path+'pca_labels.txt','r') as f1: 
         for l1 in f1:
             l1=l1.strip().replace('\n','')
             pca_labels.append(l1)
@@ -39,7 +39,7 @@ def make_dnase_matrix_post_shell_script(output_path)
 
     # make vector of colors
     color_list=[]
-    with open(output_path+'pca_color_codes.txt','r') as f2: 
+    with open(input_path+'pca_color_codes.txt','r') as f2: 
         for l2 in f2:
             l2=l2.strip().replace('\n','')
             color_list.append(l2)
@@ -103,9 +103,10 @@ def make_dnase_matrix_post_shell_script(output_path)
 def main():
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('input_path', help='the path to the input files, ending with a forward slash', type=str)
     parser.add_argument('output_path', help='the desired path to the output files, ending with a forward slash', type=str)
     args = parser.parse_args()
-    make_dnase_matrix_post_shell_script(args.output_path)
+    make_dnase_matrix_post_shell_script(args.input_path,args.output_path)
     print('Output path: ' + str(args.output_path))
     
 main()
