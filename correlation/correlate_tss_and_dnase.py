@@ -54,7 +54,6 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             dna_d_new[(dna_row_label[r], dna_col_label[c])] = dna_mat[r,c]
 
     # identifies dnase peaks <1MB of each tss
-
     a = pybedtools.example_bedtool(rna_row_labels)
     b = pybedtools.example_bedtool(dnase_row_labels)
     dnase_within_1MB_of_rna_tss = a.window(b, w=1000000)
@@ -120,9 +119,9 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             rand_score_list_pearson.append(pearsonr(rna_vec, dna_vec))
             rand_score_list_spearman.append(spearmanr(rna_vec, dna_vec))
 
-    np.savetxt('output_path'+segment+'rna_dnase_pair_locations.txt', loc_list, fmt="%s")
-    np.savetxt('output_path'+segment+'pearson_corr.txt', score_list_pearson, fmt="%s")
-    np.savetxt('output_path'+segment+'spearman_corr.txt', score_list_spearman, fmt="%s")
+    np.savetxt('output_path'+chr_name+'rna_dnase_pair_locations.txt', loc_list, fmt="%s")
+    np.savetxt('output_path'+chr_name+'pearson_corr.txt', score_list_pearson, fmt="%s")
+    np.savetxt('output_path'+chr_name+'spearman_corr.txt', score_list_spearman, fmt="%s")
 
     if visualize:
         val_pearson = [i[0] for i in score_list_pearson]
