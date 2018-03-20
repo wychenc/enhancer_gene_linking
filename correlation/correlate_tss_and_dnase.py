@@ -103,8 +103,8 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
             target = 1
             #target = [57,67,92,98,108,137]  # example points
             if counter == target:
-                x = rna_vec
-                y = dna_vec
+                x_rna = rna_vec
+                y_dna = dna_vec
                 x_loc = rna_loc
                 y_loc = dna_loc
 
@@ -227,7 +227,7 @@ def run_correlation_method(output_path, rna_mat_file, rna_row_labels, rna_col_la
 
         # plot pearson correlation of 1 rna-dnase pair across cell samples
         plt.figure(figsize=(10,10))
-        plt.scatter(x,y)
+        plt.scatter(x_rna,y_dna)
         for i, txt in enumerate(rna_col_label):
             plt.annotate(txt, (x[i],y[i]))
         plt.title('plot pearson correlation across cell samples of 1 tss-dnase pair at tss_loc:', rna_loc, ' and dnase_loc:', dna_loc)
