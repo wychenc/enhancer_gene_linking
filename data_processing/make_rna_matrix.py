@@ -3,6 +3,7 @@
 
 # In[28]:
 
+# uses gencode.v19.annotation.gtf 
 def make_rna_matrix(output_path):
     import numpy as np
     from sklearn.decomposition import PCA
@@ -13,7 +14,6 @@ def make_rna_matrix(output_path):
     gene_id_set=set()
     bios_cell_d={}
     bios_color_d={}
-
     with open('/mnt/data/integrative/metadata/rna_metadata_2016-12-05.txt','r') as f1: 
         for l1 in f1:
             if ("rsem_quant_file" in l1) or ("UW_Stam" not in l1): # skip header line & only keep data from Stam lab
@@ -55,8 +55,38 @@ def make_rna_matrix(output_path):
 
     np.savetxt(output_path+'rna_counts_gene-by-cellline_unsorted_unlabeled.txt', rna_matrix,fmt="%s",delimiter='\t')
     np.savetxt(output_path+'rna_counts_gene-by-cellline_unsorted_column_labels.txt', biosample_matched_dnase_list, fmt="%s",delimiter='\t')
-    np.savetxt(output_path+'rna_counts_gene-by-cellline_unsorted_row_labels.txt', gene_id_list, fmt="%s",delimiter='\t')
+    np.savetxt(output_path+'rna_counts_gene-by-cellline_unsorted_row_labels_genes.txt', gene_id_list, fmt="%s",delimiter='\t')
 
+    # change gene loc to tss using gtf file
+    orig_d = {}
+    gtf_d = {}
+    with open('/srv/scratch/wychen66/get_correlation/rna_outputs/gencode.v19.annotation.gtf', 'r') as f:
+        for l in f:
+            all_items = l.strip().split('\t')
+            if len(all_items)>1 and all_items[2] == 'gene':
+                items = l.split(';')[0].split('\t')  
+                ids = items[8]
+                orig_loc = items[0]+'\t'+items[3]+'\t'+items[4]
+                if items[6] == '+': 
+                    locs = items[0]+'\t'+items[3]+'\t'+str(int(items[3])+1)
+                elif items[6] == '-':
+                    locs = items[0]+'\t'+items[4]+'\t'+str(int(items[4])+1)
+
+                orig_d[ids] = orig_loc
+                gtf_d[ids] = locs
+    
+    # load list of rna loc
+    rna_tss_loc = []
+    rna_set = set()
+    with open(output_path+'rna_counts_gene-by-cellline_unsorted_row_labels_genes.txt','r') as file:
+        for line in file:
+            items = line.strip() 
+            rna_set.add(items)
+            for key, val in orig_d.items():
+                if val == items:
+                    rna_tss_loc.append(gtf_d.get(key))
+    np.savetxt(output_path+'rna_counts_gene-by-cellline_unsorted_row_labels_tss.txt', rna_tss_loc, fmt="%s")
+    
     # these lists are for labeling pca plots
     color_list = []
     tissue_list = []
@@ -88,14 +118,13 @@ def make_rna_matrix(output_path):
     np.savetxt(output_path+'rna_counts_gene-by-cellline_sorted_unlabeled_row_label.txt', gene_labels,fmt="%s",delimiter='\t')
     np.savetxt(output_path+'rna_counts_gene-by-cellline_sorted_column_label.txt', biosample_matched_dnase_list,fmt="%s",delimiter='\t')
     '''
-
     # below prepares for pca analysis
     sorted_rna_matrix = rna_matrix
     rna_transpose = np.transpose(sorted_rna_matrix)
 
     # normalize over sequencing depth
     col_sum = np.sum(rna_transpose,axis=1)
-    col_sum = col_sum.reshape(col_sum.shape[0],-1) # from (122,) to (122,1)
+    col_sum = col_sum.reshape(col_sum.shape[0],-1)
     rna_transpose_depth_normalized = np.arcsinh(10000000* np.divide(rna_transpose,col_sum))
 
     # plot PCA of rna matrix
@@ -103,7 +132,6 @@ def make_rna_matrix(output_path):
     pca.fit(rna_transpose_depth_normalized) # fit model to data
     rna_pca = pca.transform(rna_transpose_depth_normalized) # reduce dimensions
     print('reduced dimensions:', rna_pca.shape)
-
     cell_n = np.arange(len(biosample_matched_dnase_list))
     print('pca variance ratio:', pca.explained_variance_ratio_)
 
