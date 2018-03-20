@@ -8,7 +8,6 @@ def make_rna_matrix(output_path):
     from sklearn.decomposition import PCA
     from matplotlib import pyplot as plt
 
-    output_path = '/srv/scratch/wychen66/get_correlation/rna_outputs/'
     d = {}
     biosample_matched_dnase_set=set()
     gene_id_set=set()
