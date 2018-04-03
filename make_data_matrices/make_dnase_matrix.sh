@@ -1,22 +1,22 @@
 #!/bin/bash
 
-step="sort"
+step="last"
 #module load bedtools
-#python make_dnase_matrix_pre_shell_script.py /srv/scratch/wychen66/code_output/dnase_output/
+#output_path = "/srv/scratch/wychen66/code_output/dnase_output/2018-3-22/"
 
 if [ "${step}" = "presort" ]
 then
-    python make_dnase_matrix_pre_shell_script.py /srv/scratch/wychen66/code_output/dnase_output/
+    python make_dnase_matrix_pre_shell_script.py /srv/scratch/wychen66/code_output/dnase_output/2018-3-22/
     while read line
     do
     echo $line
-    zcat ${line} | cut -f1-3 >> presort.bed  # 83935573 lines
+    zcat ${line} | cut -f1-3 >> ${output_path}presort.bed  # 83935573 lines
     done < idr_files.bed # should be 122 lines
 fi
 
 if [ "${step}" = "sort" ]
 then
-    sort -k1,1 -k2,2n presort.bed > postsort.bed # 18919529 lines
+    sort -k1,1 -k2,2n presort.bed > postsort.bed # 83935573 lines
     #rm presort.bed
 fi
 
@@ -29,13 +29,13 @@ fi
 if [ "${step}" = "eval" ]
 then
     zcat -f idr_files_merged.bed | awk '{print ($3-$2)}' | awk '{sum+=$1} END {print sum}'
-    # output is 636368220
+    # output is 719826542
 fi
 
 if [ "${step}" = "add_4th_col" ]
 then
     awk '{print $1":"$2"-"$3}' idr_files_merged.bed > idr_files_merged_4th.bed
-    paste idr_files_merged.bed idr_files_merged_4th.bed > idr_files_merged.bedGraph # 762379 lines
+    paste idr_files_merged.bed idr_files_merged_4th.bed > idr_files_merged_4.bed # 845537 lines
     #rm idr_files_merged.bed
     #rm idr_files_merged_4th.bed
 fi
@@ -49,14 +49,14 @@ then
     zcat -f ${line} | cut -f1-3 | bedtools genomecov -i stdin -g /mnt/data/annotations/by_organism/human/hg19.GRCh37/hg19.chrom.sizes -bg > unsorted.bedGraph
     sort -k1,1 -k2,2n unsorted.bedGraph > sorted.bedGraph
     /srv/scratch/wychen66/software/bedGraphToBigWig sorted.bedGraph /mnt/data/annotations/by_organism/human/hg19.GRCh37/hg19.chrom.sizes sorted.bw
-    /srv/scratch/wychen66/software/bigWigAverageOverBed sorted.bw /srv/scratch/wychen66/get_correlation/dnase_outputs/idr_files_merged.bedGraph dnase_out.tab 
-    # idr_files_merged has 762379 lines
+    /srv/scratch/wychen66/software/bigWigAverageOverBed sorted.bw idr_files_merged_4.bed dnase_out.tab 
+    # idr_files_merged has 845537 lines
     cut -f6 dnase_out.tab > col.txt
     paste dnase_file.txt col.txt > dnase_final.txt
     mv dnase_final.txt dnase_file.txt
-    done < /srv/scratch/wychen66/get_correlation/dnase_outputs/tag_files.bed # 122 lines
+    done < tag_files.bed # 122 lines
 
-    mv dnase_file.txt final_dnase_matrix_in_txt_format.txt
+    mv dnase_file.txt final_dnase_matrix.txt # 845537 lines
 #    rm unsorted.bedGraph
 #    rm sorted.bedGraph
 #    rm sorted.bw
@@ -67,9 +67,10 @@ fi
 if [ "${step}" = "label" ]
 then
     while read line; do
-    echo $line >> labels.txt
-    done < /srv/scratch/wychen66/get_correlation/dnase_outputs/tag_files.bed # 122 lines
-    python make_dnase_matrix_post_shell_script.py /srv/scratch/wychen66/code_output/dnase_output/
+    echo $line >> /srv/scratch/wychen66/output/dnase_output/labels.txt
+    done < /srv/scratch/wychen66/output/dnase_output/tag_files.bed # 122 lines
+
+    python make_dnase_matrix_post_shell_script.py /srv/scratch/wychen66/output/dnase_output/
 fi
 
 
