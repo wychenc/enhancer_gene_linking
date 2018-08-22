@@ -8,6 +8,7 @@ import fnmatch
 import re
 from scipy.stats.stats import pearsonr
 import numpy as np
+import base64
 
 def main():
     
@@ -52,8 +53,8 @@ def main():
 
 def preprocess(outdir,enh_mat,gene_mat,enh_pos,gene_pos,dist,bashrc):
     print('------------------ checking input files')
-    enh_cells=gzip.open(enh_mat,'r').readline().strip().split('\t')[4:]
-    gene_cells=gzip.open(gene_mat,'r').readline().strip().split('\t')[4:]
+    enh_cells=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
+    gene_cells=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
     if len(set(enh_cells))!=len(enh_cells):
         print('Repeated column in the enhancer matrix')
         exit
@@ -111,7 +112,7 @@ def ep(outdir,enh_mat,gene_mat,methods):
         enh_data={}
         gene_data={}
         for line in gzip.open(enh_mat,'r').readlines()[1:]:
-            items=line.strip().split('\t')
+            items=line.decode('utf8').strip().split('\t')
             if items[0]!=chromo:
                 continue
             enh=items[0]+':'+items[1]+'-'+items[2]
@@ -123,7 +124,7 @@ def ep(outdir,enh_mat,gene_mat,methods):
             enh_data[enh]=values
 
         for line in gzip.open(gene_mat,'r').readlines()[1:]:
-            items=line.strip().split('\t')
+            items=line.decode('utf8').strip().split('\t')
             if items[0]!=chromo:
                 continue
             gene=items[0]+':'+items[1]+'-'+items[2]
@@ -150,7 +151,7 @@ def ep(outdir,enh_mat,gene_mat,methods):
                     enh2gene_value=get_corr(e_values,g_values)
                     #TODO: deal with nans
                     #write to file
-                    files_dict['correlation'].write(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n')
+                    files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n').encode())
 
                 #add your own methods
 
