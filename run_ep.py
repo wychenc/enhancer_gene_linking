@@ -55,6 +55,9 @@ def preprocess(outdir,enh_mat,gene_mat,enh_pos,gene_pos,dist,bashrc):
     print('------------------ checking input files')
     enh_cells=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
     gene_cells=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
+    enh_pos=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[:5]
+    gene_pos=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[:5]
+
     if len(set(enh_cells))!=len(enh_cells):
         print('Repeated column in the enhancer matrix')
         exit
@@ -68,7 +71,8 @@ def preprocess(outdir,enh_mat,gene_mat,enh_pos,gene_pos,dist,bashrc):
         print('WARNING: cell lines in gene matrix not found in gene matrix: '+','.join(list(set(gene_cells).setdiff(enh_cells))))
 
     #TODO: check all elements in enh and gene matrix are in the --enh_pos and --gene_pos files
-    
+    #enh_pos and gene_pos matrices are extracted from enh_mat and gene_mat    
+
     print('------------------ assigning enhancer-gene pairs to investigate using a distance threshold')
     #write a script to run bedtools window. the script will first load the bashrc, then run the command
     subp.check_output(['bash','-c','mkdir -p '+outdir+'/scripts'])
@@ -148,8 +152,12 @@ def ep(outdir,enh_mat,gene_mat,methods):
                 g_values=gene_data[gname]
 
                 if 'correlation' in methods_list:
-                    enh2gene_value=get_corr(e_values,g_values)
                     #TODO: deal with nans
+		    if np.var(e_values) is not 0:
+		    	enh2gene_value=get_corr(e_values,g_values)
+                    else:	
+		    	enh2gene_value='nan'
+
                     #write to file
                     files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n').encode())
 
