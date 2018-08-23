@@ -23,11 +23,11 @@ def main():
     gene_mat_parser=argparse.ArgumentParser(add_help=False)
     gene_mat_parser.add_argument('--gene_mat',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/gene_mat.gz')
 
-    enh_pos_parser=argparse.ArgumentParser(add_help=False)
-    enh_pos_parser.add_argument('--enh_pos',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/enh_pos.bed')
+#    enh_pos_parser=argparse.ArgumentParser(add_help=False)
+#    enh_pos_parser.add_argument('--enh_pos',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/enh_pos.bed')
 
-    gene_pos_parser=argparse.ArgumentParser(add_help=False)
-    gene_pos_parser.add_argument('--gene_pos',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/gene_pos.bed')
+#    gene_pos_parser=argparse.ArgumentParser(add_help=False)
+#    gene_pos_parser.add_argument('--gene_pos',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/gene_pos.bed')
 
     dist_parser=argparse.ArgumentParser(add_help=False)
     dist_parser.add_argument('--dist',type=int,default=1000000)
@@ -41,7 +41,8 @@ def main():
     subparsers = parser.add_subparsers(help='', dest='command')
     subparsers.required = True #http://bugs.python.org/issue9253#msg186387
     
-    preprocess_parser=subparsers.add_parser('preprocess',parents=[outdir_parser,enh_mat_parser,gene_mat_parser,enh_pos_parser,gene_pos_parser,dist_parser,bashrc_parser],help='')
+#    preprocess_parser=subparsers.add_parser('preprocess',parents=[outdir_parser,enh_mat_parser,gene_mat_parser,enh_pos_parser,gene_pos_parser,dist_parser,bashrc_parser],help='')
+    preprocess_parser=subparsers.add_parser('preprocess',parents=[outdir_parser,enh_mat_parser,gene_mat_parser,dist_parser,bashrc_parser],help='')
     ep_parser=subparsers.add_parser('ep',parents=[outdir_parser,enh_mat_parser,gene_mat_parser,methods_parser],help='')
     
     args = vars(parser.parse_args())
@@ -51,7 +52,8 @@ def main():
                          'ep': ep}
     command_methods[command](**args)
 
-def preprocess(outdir,enh_mat,gene_mat,enh_pos,gene_pos,dist,bashrc):
+#def preprocess(outdir,enh_mat,gene_mat,enh_pos,gene_pos,dist,bashrc):
+def preprocess(outdir,enh_mat,gene_mat,dist,bashrc):
     print('------------------ checking input files')
     enh_cells=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
     gene_cells=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
@@ -81,7 +83,7 @@ def preprocess(outdir,enh_mat,gene_mat,enh_pos,gene_pos,dist,bashrc):
     sname=outdir+'/scripts/connect_enh2gene_pos.sh'
     s=open(sname,'w')
     s.write('. '+bashrc+'\n')
-    s.write('bedtools window -w '+str(dist)+' -a '+enh_pos+' -b '+gene_pos+' | gzip > '+outdir+'/data/enh2gene.pos.gz'+'\n')
+    s.write('bedtools window -w '+str(dist)+' -a '+str(enh_pos)+' -b '+str(gene_pos)+' | gzip > '+outdir+'/data/enh2gene.pos.gz'+'\n')
     s.close()
     run_script(sname)
     print('Result: '+outdir+'/data/enh2gene.pos.gz')
@@ -132,31 +134,33 @@ def ep(outdir,enh_mat,gene_mat,methods):
             if items[0]!=chromo:
                 continue
             gene=items[0]+':'+items[1]+'-'+items[2]
+            gene_name=items[3]
             values=np.array([float(x) for x in items[4:]])
             #TODO: make sure cell types are in the correct order
             if gene in gene_data:
-                print('Gene '+gene+' repeated')
+                print('Gene '+gene_name+' '+gene+' repeated')
                 exit
-            gene_data[gene]=values
-
+            #gene_data[gene]=values
+            gene_data[gene_name]=values
         #TODO: index by gene names rather than the position in the genome
         
         #extract enh2gene pairs
         for line in open(outdir+'/data/enh2gene.pos.gz.'+chromo,'r').readlines():
             items=line.strip().split('\t')
             e_chr,e_start,e_end,g_chr,g_start,g_end=items[0],items[1],items[2],items[3],items[4],items[5]
+            #e_name=items
             ename=e_chr+':'+e_start+'-'+e_end
             gname=g_chr+':'+g_start+'-'+g_end
             if ename in enh_data.keys() and gname in gene_data.keys():
-                e_values=enh_data[ename]
+               	e_values=enh_data[ename]
                 g_values=gene_data[gname]
 
                 if 'correlation' in methods_list:
                     #TODO: deal with nans
-		    if np.var(e_values) is not 0:
-		    	enh2gene_value=get_corr(e_values,g_values)
+                    if np.var(e_values)!=0:
+                        enh2gene_value=get_corr(e_values,g_values)
                     	#write to file
-                    	files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n').encode())
+                        files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n').encode())
 
                 #add your own methods
 
