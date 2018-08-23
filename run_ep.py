@@ -155,11 +155,8 @@ def ep(outdir,enh_mat,gene_mat,methods):
                     #TODO: deal with nans
 		    if np.var(e_values) is not 0:
 		    	enh2gene_value=get_corr(e_values,g_values)
-                    else:	
-		    	enh2gene_value='nan'
-
-                    #write to file
-                    files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n').encode())
+                    	#write to file
+                    	files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n').encode())
 
                 #add your own methods
 
