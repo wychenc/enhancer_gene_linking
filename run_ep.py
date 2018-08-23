@@ -23,12 +23,6 @@ def main():
     gene_mat_parser=argparse.ArgumentParser(add_help=False)
     gene_mat_parser.add_argument('--gene_mat',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/gene_mat.gz')
 
-#    enh_pos_parser=argparse.ArgumentParser(add_help=False)
-#    enh_pos_parser.add_argument('--enh_pos',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/enh_pos.bed')
-
-#    gene_pos_parser=argparse.ArgumentParser(add_help=False)
-#    gene_pos_parser.add_argument('--gene_pos',default='/mnt/lab_data/kundaje/users/oursu/code/forcici/enhancer_gene_linking/gene_pos.bed')
-
     dist_parser=argparse.ArgumentParser(add_help=False)
     dist_parser.add_argument('--dist',type=int,default=1000000)
 
@@ -41,7 +35,6 @@ def main():
     subparsers = parser.add_subparsers(help='', dest='command')
     subparsers.required = True #http://bugs.python.org/issue9253#msg186387
     
-#    preprocess_parser=subparsers.add_parser('preprocess',parents=[outdir_parser,enh_mat_parser,gene_mat_parser,enh_pos_parser,gene_pos_parser,dist_parser,bashrc_parser],help='')
     preprocess_parser=subparsers.add_parser('preprocess',parents=[outdir_parser,enh_mat_parser,gene_mat_parser,dist_parser,bashrc_parser],help='')
     ep_parser=subparsers.add_parser('ep',parents=[outdir_parser,enh_mat_parser,gene_mat_parser,methods_parser],help='')
     
@@ -52,7 +45,6 @@ def main():
                          'ep': ep}
     command_methods[command](**args)
 
-#def preprocess(outdir,enh_mat,gene_mat,enh_pos,gene_pos,dist,bashrc):
 def preprocess(outdir,enh_mat,gene_mat,dist,bashrc):
     print('------------------ checking input files')
     enh_cells=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
@@ -107,6 +99,20 @@ def ep(outdir,enh_mat,gene_mat,methods):
     #extract the enh2gene pairs to compute
     #compute (yay!)
 
+    #TODO: make sure cell types are in the correct order
+    print(enh_mat, type(enh_mat)
+    for line in open(enh_mat,'r').readlines():
+#    for line in gzip.open(enh_mat,'r').readlines()[1:]:
+        items=line.decode('utf8').strip().split('\t')
+        if items[0]=chromo:
+	    e_celllist=items[4:7]    
+    for line in open(gene_mat,'r').readlines():
+        items=line.decode('utf8').strip().split('\t')
+        if items[0]=chromo:
+	    g_celllist=items[4:7]
+    if e_celllist!=g_celllist:
+        print('error: enhancer and gene matrices need to have the same cell types in the same order')
+
     for chromo_f in fnmatch.filter(os.listdir(outdir+'/data/'), 'enh2gene.pos.gz.*'):
         chromo=re.sub('enh2gene.pos.gz.','',chromo_f)
         print(chromo)
@@ -117,43 +123,50 @@ def ep(outdir,enh_mat,gene_mat,methods):
         
         enh_data={}
         gene_data={}
-        for line in gzip.open(enh_mat,'r').readlines()[1:]:
+        e_pos2name={}
+        g_pos2name={}
+        for line in open(enh_mat,'r').readlines()[1:]: 
             items=line.decode('utf8').strip().split('\t')
             if items[0]!=chromo:
                 continue
             enh=items[0]+':'+items[1]+'-'+items[2]
+            e_name=items[3]
             values=np.array([float(x) for x in items[4:]])
             #TODO: make sure cell types are in the correct order
-            if enh in enh_data:
+
+            if e_name in enh_data:
                 print('Enhancer '+enh+' repeated')
                 exit
-            enh_data[enh]=values
+            enh_data[e_name]=values
+            e_pos2name[enh]=e_name
 
-        for line in gzip.open(gene_mat,'r').readlines()[1:]:
+        for line in open(gene_mat,'r').readlines()[1:]:
             items=line.decode('utf8').strip().split('\t')
             if items[0]!=chromo:
                 continue
             gene=items[0]+':'+items[1]+'-'+items[2]
-            gene_name=items[3]
+            g_name=items[3]
             values=np.array([float(x) for x in items[4:]])
             #TODO: make sure cell types are in the correct order
-            if gene in gene_data:
+
+            if g_name in gene_data:
                 print('Gene '+gene_name+' '+gene+' repeated')
                 exit
-            #gene_data[gene]=values
-            gene_data[gene_name]=values
+            gene_data[g_name]=values
+            g_pos2name[gene]=g_name
         #TODO: index by gene names rather than the position in the genome
         
         #extract enh2gene pairs
         for line in open(outdir+'/data/enh2gene.pos.gz.'+chromo,'r').readlines():
             items=line.strip().split('\t')
             e_chr,e_start,e_end,g_chr,g_start,g_end=items[0],items[1],items[2],items[3],items[4],items[5]
-            #e_name=items
-            ename=e_chr+':'+e_start+'-'+e_end
-            gname=g_chr+':'+g_start+'-'+g_end
-            if ename in enh_data.keys() and gname in gene_data.keys():
-               	e_values=enh_data[ename]
-                g_values=gene_data[gname]
+            e_pos=e_chr+':'+e_start+'-'+e_end
+            g_pos=g_chr+':'+g_start+'-'+g_end
+            enh_name=e_pos2name[e_pos]
+            gene_name=g_pos2name[g_pos]
+            if enh_name in enh_data.keys() and gene_name in gene_data.keys():
+               	e_values=enh_data[enh_name]
+                g_values=gene_data[gene_name]
 
                 if 'correlation' in methods_list:
                     #TODO: deal with nans
