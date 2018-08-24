@@ -9,6 +9,7 @@ import re
 from scipy.stats.stats import pearsonr
 import numpy as np
 import base64
+import codecs
 
 def main():
     
@@ -49,8 +50,6 @@ def preprocess(outdir,enh_mat,gene_mat,dist,bashrc):
     print('------------------ checking input files')
     enh_cells=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
     gene_cells=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
-    enh_pos=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[:5]
-    gene_pos=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[:5]
 
     if len(set(enh_cells))!=len(enh_cells):
         print('Repeated column in the enhancer matrix')
@@ -75,7 +74,9 @@ def preprocess(outdir,enh_mat,gene_mat,dist,bashrc):
     sname=outdir+'/scripts/connect_enh2gene_pos.sh'
     s=open(sname,'w')
     s.write('. '+bashrc+'\n')
-    s.write('bedtools window -w '+str(dist)+' -a '+str(enh_pos)+' -b '+str(gene_pos)+' | gzip > '+outdir+'/data/enh2gene.pos.gz'+'\n')
+    s.write('zcat '+enh_mat+' | tail -n +2 | cut -f1-4 > '+outdir+'/data/enh_pos'+'\n')
+    s.write('zcat '+gene_mat+' | tail -n +2 | cut -f1-4 > '+outdir+'/data/gene_pos'+'\n')
+    s.write('bedtools window -w '+str(dist)+' -a '+outdir+'/data/enh_pos'+' -b '+outdir+'/data/gene_pos'+' | gzip > '+outdir+'/data/enh2gene.pos.gz'+'\n')
     s.close()
     run_script(sname)
     print('Result: '+outdir+'/data/enh2gene.pos.gz')
@@ -100,19 +101,12 @@ def ep(outdir,enh_mat,gene_mat,methods):
     #compute (yay!)
 
     #TODO: make sure cell types are in the correct order
-    print(enh_mat, type(enh_mat)
-    for line in open(enh_mat,'r').readlines():
-#    for line in gzip.open(enh_mat,'r').readlines()[1:]:
-        items=line.decode('utf8').strip().split('\t')
-        if items[0]=chromo:
-	    e_celllist=items[4:7]    
-    for line in open(gene_mat,'r').readlines():
-        items=line.decode('utf8').strip().split('\t')
-        if items[0]=chromo:
-	    g_celllist=items[4:7]
+    print(enh_mat, type(enh_mat))
+    e_celllist=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
+    g_celllist=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
     if e_celllist!=g_celllist:
         print('error: enhancer and gene matrices need to have the same cell types in the same order')
-
+        exit
     for chromo_f in fnmatch.filter(os.listdir(outdir+'/data/'), 'enh2gene.pos.gz.*'):
         chromo=re.sub('enh2gene.pos.gz.','',chromo_f)
         print(chromo)
@@ -123,9 +117,7 @@ def ep(outdir,enh_mat,gene_mat,methods):
         
         enh_data={}
         gene_data={}
-        e_pos2name={}
-        g_pos2name={}
-        for line in open(enh_mat,'r').readlines()[1:]: 
+        for line in gzip.open(enh_mat,'r').readlines()[1:]: 
             items=line.decode('utf8').strip().split('\t')
             if items[0]!=chromo:
                 continue
@@ -138,9 +130,8 @@ def ep(outdir,enh_mat,gene_mat,methods):
                 print('Enhancer '+enh+' repeated')
                 exit
             enh_data[e_name]=values
-            e_pos2name[enh]=e_name
 
-        for line in open(gene_mat,'r').readlines()[1:]:
+        for line in gzip.open(gene_mat,'r').readlines()[1:]:
             items=line.decode('utf8').strip().split('\t')
             if items[0]!=chromo:
                 continue
@@ -153,27 +144,29 @@ def ep(outdir,enh_mat,gene_mat,methods):
                 print('Gene '+gene_name+' '+gene+' repeated')
                 exit
             gene_data[g_name]=values
-            g_pos2name[gene]=g_name
         #TODO: index by gene names rather than the position in the genome
         
         #extract enh2gene pairs
         for line in open(outdir+'/data/enh2gene.pos.gz.'+chromo,'r').readlines():
             items=line.strip().split('\t')
-            e_chr,e_start,e_end,g_chr,g_start,g_end=items[0],items[1],items[2],items[3],items[4],items[5]
-            e_pos=e_chr+':'+e_start+'-'+e_end
-            g_pos=g_chr+':'+g_start+'-'+g_end
-            enh_name=e_pos2name[e_pos]
-            gene_name=g_pos2name[g_pos]
-            if enh_name in enh_data.keys() and gene_name in gene_data.keys():
-               	e_values=enh_data[enh_name]
-                g_values=gene_data[gene_name]
+            e_chr=items[0]
+            g_chr=items[4]
+            e_start=items[1]
+            e_end=items[2]
+            g_start=items[5]
+            g_end=items[6]
+            e_name=items[3]
+            g_name=items[7]
+            if e_name in enh_data.keys() and g_name in gene_data.keys():
+               	e_values=enh_data[e_name]
+                g_values=gene_data[g_name]
 
                 if 'correlation' in methods_list:
                     #TODO: deal with nans
                     if np.var(e_values)!=0:
                         enh2gene_value=get_corr(e_values,g_values)
                     	#write to file
-                        files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+str(enh2gene_value)+'\n').encode())
+                        files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+e_name+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+g_name+'\t'+str(enh2gene_value)+'\n').encode())
 
                 #add your own methods
 
