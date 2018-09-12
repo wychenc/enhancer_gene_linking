@@ -50,7 +50,6 @@ def preprocess(outdir,enh_mat,gene_mat,dist,bashrc):
     print('------------------ checking input files')
     enh_cells=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
     gene_cells=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
-
     if len(set(enh_cells))!=len(enh_cells):
         print('Repeated column in the enhancer matrix')
         exit
@@ -59,26 +58,34 @@ def preprocess(outdir,enh_mat,gene_mat,dist,bashrc):
         exit
     common_cells=set(enh_cells).intersection(gene_cells)
     if len(common_cells)<len(set(enh_cells)):
-        print('WARNING: cell lines in enhancer matrix not found in gene matrix: '+','.join(list(set(enh_cells).setdiff(gene_cells))))
+        print('WARNING: cell lines in enhancer matrix not found in gene matrix: '+','.join(list(set(enh_cells).difference(gene_cells))))
     if len(common_cells)<len(set(gene_cells)):
-        print('WARNING: cell lines in gene matrix not found in gene matrix: '+','.join(list(set(gene_cells).setdiff(enh_cells))))
-
+        print('WARNING: cell lines in gene matrix not found in gene matrix: '+','.join(list(set(gene_cells).difference(enh_cells))))
     #TODO: check all elements in enh and gene matrix are in the --enh_pos and --gene_pos files
     #enh_pos and gene_pos matrices are extracted from enh_mat and gene_mat    
 
     print('------------------ assigning enhancer-gene pairs to investigate using a distance threshold')
     #write a script to run bedtools window. the script will first load the bashrc, then run the command
     subp.check_output(['bash','-c','mkdir -p '+outdir+'/scripts'])
+    #print('after subp 1')
     subp.check_output(['bash','-c','mkdir -p '+outdir+'/data'])
+    #print('after subp 2')
     subp.check_output(['bash','-c','mkdir -p '+outdir+'/results'])
+    #print('after subp 3')
     sname=outdir+'/scripts/connect_enh2gene_pos.sh'
     s=open(sname,'w')
+    #print('after subp 4')
     s.write('. '+bashrc+'\n')
     s.write('zcat '+enh_mat+' | tail -n +2 | cut -f1-4 > '+outdir+'/data/enh_pos'+'\n')
+    #print('after subp 5')
     s.write('zcat '+gene_mat+' | tail -n +2 | cut -f1-4 > '+outdir+'/data/gene_pos'+'\n')
+    #print('after subp 6')
     s.write('bedtools window -w '+str(dist)+' -a '+outdir+'/data/enh_pos'+' -b '+outdir+'/data/gene_pos'+' | gzip > '+outdir+'/data/enh2gene.pos.gz'+'\n')
+    #print('after subp 7')
     s.close()
+    #print('after subp 8')
     run_script(sname)
+    #print('after subp 9')
     print('Result: '+outdir+'/data/enh2gene.pos.gz')
     
     print('------------------ splitting files (enh2gene, enh_matrix, gene_matrix) by chromosome')
