@@ -16,10 +16,7 @@ if [[ $input == '1' ]]; then
 	wget -i $all_bam_urls_f
 fi
 
-# bam to bigwig using bamCoverage -- cannot find original script
-# [wychen66@sh-ln05 /oak/stanford/groups/akundaje/projects/enhancer_gene_linking]$ grep -R "bamCoverage" *
-# Killed
-# bamCoverage -b ${bamname} -o ${bamname}.coverage.bw
+# convert .bam to .bigwig using bamCoverage
 
 # bigWigAverageOverBed to get .tab from bigwig
 ### get bed file of tss's with 10KB window from gtf file
@@ -40,7 +37,7 @@ if [[ $input == '2' ]]; then
 fi
 
 
-# get correct .tab (those w/o segmentation errors)
+# get correct .tab 
 if [[ $input == '3' ]]; then
 	## move correct tss .tab into directory
 	mkdir correct_tss_tabs 
