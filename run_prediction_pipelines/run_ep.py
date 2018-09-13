@@ -61,31 +61,22 @@ def preprocess(outdir,enh_mat,gene_mat,dist,bashrc):
         print('WARNING: cell lines in enhancer matrix not found in gene matrix: '+','.join(list(set(enh_cells).difference(gene_cells))))
     if len(common_cells)<len(set(gene_cells)):
         print('WARNING: cell lines in gene matrix not found in gene matrix: '+','.join(list(set(gene_cells).difference(enh_cells))))
-    #TODO: check all elements in enh and gene matrix are in the --enh_pos and --gene_pos files
+    #check all elements in enh and gene matrix are in the --enh_pos and --gene_pos files
     #enh_pos and gene_pos matrices are extracted from enh_mat and gene_mat    
 
     print('------------------ assigning enhancer-gene pairs to investigate using a distance threshold')
     #write a script to run bedtools window. the script will first load the bashrc, then run the command
     subp.check_output(['bash','-c','mkdir -p '+outdir+'/scripts'])
-    #print('after subp 1')
     subp.check_output(['bash','-c','mkdir -p '+outdir+'/data'])
-    #print('after subp 2')
     subp.check_output(['bash','-c','mkdir -p '+outdir+'/results'])
-    #print('after subp 3')
     sname=outdir+'/scripts/connect_enh2gene_pos.sh'
     s=open(sname,'w')
-    #print('after subp 4')
     s.write('. '+bashrc+'\n')
     s.write('zcat '+enh_mat+' | tail -n +2 | cut -f1-4 > '+outdir+'/data/enh_pos'+'\n')
-    #print('after subp 5')
     s.write('zcat '+gene_mat+' | tail -n +2 | cut -f1-4 > '+outdir+'/data/gene_pos'+'\n')
-    #print('after subp 6')
     s.write('bedtools window -w '+str(dist)+' -a '+outdir+'/data/enh_pos'+' -b '+outdir+'/data/gene_pos'+' | gzip > '+outdir+'/data/enh2gene.pos.gz'+'\n')
-    #print('after subp 7')
     s.close()
-    #print('after subp 8')
     run_script(sname)
-    #print('after subp 9')
     print('Result: '+outdir+'/data/enh2gene.pos.gz')
     
     print('------------------ splitting files (enh2gene, enh_matrix, gene_matrix) by chromosome')
@@ -105,9 +96,9 @@ def ep(outdir,enh_mat,gene_mat,methods):
     methods_list=methods.split(',')
     #go through each chromosome
     #extract the enh2gene pairs to compute
-    #compute (yay!)
+    #compute
 
-    #TODO: make sure cell types are in the correct order
+    #make sure cell types are in the correct order
     print(enh_mat, type(enh_mat))
     e_celllist=gzip.open(enh_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
     g_celllist=gzip.open(gene_mat,'r').readline().decode('utf8').strip().split('\t')[4:]
@@ -131,7 +122,7 @@ def ep(outdir,enh_mat,gene_mat,methods):
             enh=items[0]+':'+items[1]+'-'+items[2]
             e_name=items[3]
             values=np.array([float(x) for x in items[4:]])
-            #TODO: make sure cell types are in the correct order
+            #make sure cell types are in the correct order
 
             if e_name in enh_data:
                 print('Enhancer '+enh+' repeated')
@@ -145,13 +136,13 @@ def ep(outdir,enh_mat,gene_mat,methods):
             gene=items[0]+':'+items[1]+'-'+items[2]
             g_name=items[3]
             values=np.array([float(x) for x in items[4:]])
-            #TODO: make sure cell types are in the correct order
+            #make sure cell types are in the correct order
 
             if g_name in gene_data:
                 print('Gene '+gene_name+' '+gene+' repeated')
                 exit
             gene_data[g_name]=values
-        #TODO: index by gene names rather than the position in the genome
+        #index by gene names rather than the position in the genome
         
         #extract enh2gene pairs
         for line in open(outdir+'/data/enh2gene.pos.gz.'+chromo,'r').readlines():
@@ -169,13 +160,13 @@ def ep(outdir,enh_mat,gene_mat,methods):
                 g_values=gene_data[g_name]
 
                 if 'correlation' in methods_list:
-                    #TODO: deal with nans
+                    #deal with nans
                     if np.var(e_values)!=0:
                         enh2gene_value=get_corr(e_values,g_values)
                     	#write to file
                         files_dict['correlation'].write(str(e_chr+'\t'+e_start+'\t'+e_end+'\t'+e_name+'\t'+g_chr+'\t'+g_start+'\t'+g_end+'\t'+g_name+'\t'+str(enh2gene_value)+'\n').encode())
 
-                #add your own methods
+                #add additional methods
 
 def get_corr(a,b):
     return pearsonr(a,b)[0]
